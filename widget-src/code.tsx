@@ -293,7 +293,12 @@ function Widget() {
   }
 
   return (
-    <Frame name='Widget' overflow='visible' width={450} height={'fill-parent'}>
+    <Frame
+      name='Widget'
+      overflow='visible'
+      width={open ? 450 : 50}
+      height={open ? 400 : 50}
+    >
       <AutoLayout
         name='DataTracking'
         effect={{
@@ -567,10 +572,10 @@ function Widget() {
       <Rectangle
         cornerRadius={cornerRadius}
         fill={color}
-        height={size}
+        height={50}
         hoverStyle={{ opacity: 0.7 }}
         onClick={() => setOpen(!open)}
-        width={size}
+        width={50}
         effect={shadow}
       />
     </Frame>
