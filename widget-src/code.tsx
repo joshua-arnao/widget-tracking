@@ -58,6 +58,7 @@ const fills = [
   '#33ff66',
   '#33ffff'
 ];
+
 function Widget() {
   useEffect(() => {
     figma.ui.onmessage = (msg) => {
@@ -70,6 +71,13 @@ function Widget() {
     };
   });
 
+  const stateOptions = [
+    { option: 'definition', label: '📝 Definition' },
+    { option: 'implementation', label: '👩🏽‍💻 Ready for dev' },
+    { option: 'validation', label: '⏳ Pending Validation' },
+    { option: 'ready', label: '✅ Ready' }
+  ];
+
   const [open, setOpen] = useSyncedState('open', true);
   const [color, setColor] = useSyncedState('color', fills[0]);
   const [size] = useSyncedState('size', 50);
@@ -80,35 +88,47 @@ function Widget() {
     'additionalElements',
     0
   );
+  const [state, setState] = useSyncedState('state', '📝 Definition');
 
   usePropertyMenu(
-    open
-      ? [
-          {
-            itemType: 'color-selector',
-            options: fills.map((a) => ({ tooltip: a, option: a })),
-            selectedOption: color,
-            tooltip: 'Color',
-            propertyName: 'color'
-          },
-          {
-            itemType: 'action',
-            tooltip: 'Duplicate Widget',
-            propertyName: 'duplicateWidget',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="19" height="22" viewBox="0 0 19 22" fill="none">
+    [
+      {
+        itemType: 'color-selector',
+        options: fills.map((a) => ({ tooltip: a, option: a })),
+        selectedOption: color,
+        tooltip: 'Color',
+        propertyName: 'color'
+      },
+      {
+        itemType: 'separator'
+      },
+      {
+        itemType: 'dropdown',
+        propertyName: 'states',
+        tooltip: 'State Selectorß',
+        selectedOption: state,
+        options: stateOptions
+      },
+      {
+        itemType: 'separator'
+      },
+      {
+        itemType: 'action',
+        tooltip: 'Duplicate Widget',
+        propertyName: 'duplicateWidget',
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="19" height="22" viewBox="0 0 19 22" fill="none">
             <path d="M9 16H2C1.46957 16 0.960859 15.7893 0.585786 15.4142C0.210714 15.0391 0 14.5304 0 14V2C0 1.46957 0.210714 0.960859 0.585786 0.585786C0.960859 0.210714 1.46957 0 2 0H14V2H2V14H9V12L13 15L9 18V16ZM17 20V6H6V12H4V6C4 5.46957 4.21071 4.96086 4.58579 4.58579C4.96086 4.21071 5.46957 4 6 4H17C17.5304 4 18.0391 4.21071 18.4142 4.58579C18.7893 4.96086 19 5.46957 19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H6C5.46957 22 4.96086 21.7893 4.58579 21.4142C4.21071 21.0391 4 20.5304 4 20V18H6V20H17Z" fill="white"/>
             </svg>`
-          },
-          {
-            itemType: 'action',
-            tooltip: 'New Widget',
-            propertyName: 'newWidget',
-            icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+      },
+      {
+        itemType: 'action',
+        tooltip: 'New Widget',
+        propertyName: 'newWidget',
+        icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M5 19V5H12V12H19V13C19.7 13 20.37 13.13 21 13.35V9L15 3H5C3.89 3 3 3.89 3 5V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H13.35C13.13 20.37 13 19.7 13 19H5ZM14 4.5L19.5 10H14V4.5ZM23 18V20H20V23H18V20H15V18H18V15H20V18H23Z" fill="white"/>
             </svg>`
-          }
-        ]
-      : [],
+      }
+    ],
     ({ propertyName, propertyValue }) => {
       if (propertyName === 'color' && propertyValue) {
         setColor(propertyValue);
@@ -118,6 +138,9 @@ function Widget() {
       }
       if (propertyName === 'newWidget') {
         handleNewWidget();
+      }
+      if (propertyName === 'states' && propertyValue) {
+        setState(propertyValue);
       }
     }
   );
@@ -129,7 +152,7 @@ function Widget() {
       const widgetNode = selection[0] as FrameNode;
       const newWidgetNode = widgetNode.clone();
       newWidgetNode.name = `${widgetNode.name}`;
-      newWidgetNode.x += 450;
+      !open ? (newWidgetNode.x += 100) : (newWidgetNode.x += 450);
       newWidgetNode.y += 0;
 
       // Puedes ajustar otras propiedades del nuevo widget aquí si es necesario
@@ -157,7 +180,7 @@ function Widget() {
       if (widgetNode.parent) {
         // Insertar el nuevo widget al principio de la lista de hijos del contenedor
         widgetNode.parent.insertChild(0, newWidgetNode);
-        widgetNode.x += 450;
+        !open ? (newWidgetNode.x += 100) : (newWidgetNode.x += 450);
         widgetNode.y += 0;
       } else {
         figma.currentPage.appendChild(newWidgetNode);
@@ -170,7 +193,7 @@ function Widget() {
     }
   };
 
-  const fontSize = 10;
+  const fontSize = 13;
   const padding = size * 0.2;
   const strokeWidth = 1;
 
@@ -237,7 +260,7 @@ function Widget() {
         <Input
           name='TagInput'
           fontSize={fontSize}
-          fontWeight='normal'
+          fontWeight='semi-bold'
           fontFamily='Quicksand'
           inputFrameProps={{
             cornerRadius: 4,
@@ -261,7 +284,7 @@ function Widget() {
         <Input
           name='eventInput'
           fontSize={fontSize}
-          fontWeight='normal'
+          fontWeight='semi-bold'
           fontFamily='Quicksand'
           inputFrameProps={{
             cornerRadius: 4,
@@ -340,24 +363,40 @@ function Widget() {
           verticalAlignItems='center'
         >
           <AutoLayout
-            name='Text'
-            overflow='visible'
-            horizontalAlignItems='center'
-            verticalAlignItems='center'
+            direction='horizontal'
+            verticalAlignItems={'center'}
+            spacing={8}
           >
-            <Text
-              name='Data Tracking'
-              fill='#000'
-              horizontalAlignText='center'
-              fontFamily='Quicksand'
-              fontSize={12}
-              fontWeight={700}
+            <SVG src={buttonSrc} />
+            <AutoLayout
+              name='Text'
+              overflow='visible'
+              horizontalAlignItems='center'
+              verticalAlignItems='center'
             >
-              Data Tracking
-            </Text>
+              <Text
+                name='Data Tracking'
+                fill='#000'
+                horizontalAlignText='center'
+                fontFamily='Quicksand'
+                fontSize={16}
+                fontWeight={700}
+              >
+                Data Tracking
+              </Text>
+            </AutoLayout>
           </AutoLayout>
 
-          <SVG src={buttonSrc} />
+          <AutoLayout verticalAlignItems={'center'}>
+            <Text
+              fontFamily='Fira Mono'
+              fontSize={14}
+              fontWeight={600}
+              horizontalAlignText='center'
+            >
+              {stateOptions.find((f) => f.option === state)?.label}
+            </Text>
+          </AutoLayout>
         </AutoLayout>
 
         <AutoLayout
@@ -390,7 +429,8 @@ function Widget() {
                 fill='#000'
                 horizontalAlignText='center'
                 fontFamily='Fira Mono'
-                fontSize={11}
+                fontSize={14}
+                fontWeight={600}
               >
                 Page:
               </Text>
@@ -398,7 +438,7 @@ function Widget() {
               <Input
                 name='inputPage'
                 fontSize={fontSize}
-                fontWeight='normal'
+                fontWeight='semi-bold'
                 inputFrameProps={{
                   cornerRadius: 4,
                   effect: shadow,
@@ -431,7 +471,8 @@ function Widget() {
                 fill='#000'
                 horizontalAlignText='center'
                 fontFamily='Fira Mono'
-                fontSize={11}
+                fontSize={14}
+                fontWeight={600}
               >
                 Element:
               </Text>
@@ -439,7 +480,7 @@ function Widget() {
               <Input
                 name='inputElemet'
                 fontSize={fontSize}
-                fontWeight='normal'
+                fontWeight='semi-bold'
                 inputFrameProps={{
                   cornerRadius: 4,
                   effect: shadow,
@@ -474,7 +515,8 @@ function Widget() {
               fill='#000'
               horizontalAlignText='center'
               fontFamily='Fira Mono'
-              fontSize={11}
+              fontSize={14}
+              fontWeight={600}
             >
               Description:
             </Text>
@@ -482,7 +524,7 @@ function Widget() {
             <Input
               name='inputDescription'
               fontSize={fontSize}
-              fontWeight='normal'
+              fontWeight='semi-bold'
               inputFrameProps={{
                 cornerRadius: 4,
                 effect: shadow,
@@ -524,7 +566,8 @@ function Widget() {
                 fill='#000'
                 horizontalAlignText='left'
                 fontFamily='Fira Mono'
-                fontSize={11}
+                fontSize={14}
+                fontWeight={600}
               >
                 Event properties:
               </Text>
@@ -546,7 +589,7 @@ function Widget() {
                 fill='#8F8F8F'
                 horizontalAlignText='center'
                 fontFamily='Fira Mono'
-                fontSize={10}
+                fontSize={12}
                 width={'fill-parent'}
               >
                 Id Tag
@@ -556,7 +599,7 @@ function Widget() {
                 fill='#8F8F8F'
                 horizontalAlignText='center'
                 fontFamily='Fira Mono'
-                fontSize={10}
+                fontSize={12}
                 width={'fill-parent'}
               >
                 Event
